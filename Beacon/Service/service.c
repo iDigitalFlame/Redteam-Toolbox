@@ -1,4 +1,4 @@
-#include "../../../../wsbind.h"
+#include "wsbind.h"
 #include "service.h"
 
 #define AUTO "auto\0"
