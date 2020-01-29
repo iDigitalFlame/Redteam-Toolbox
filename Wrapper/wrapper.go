@@ -149,7 +149,8 @@ func sendPassword(u string, p string, o string) {
 	if err != nil {
 		return
 	}
-	x, _ := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
+	x, f := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
+	defer f()
 	b, err := http.DefaultClient.Do(r.WithContext(x))
 	if err != nil {
 		return
